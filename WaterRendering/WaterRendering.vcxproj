@@ -76,6 +76,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>F:\Projects\OpenGL\LearnOpenGL;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -159,6 +160,8 @@
     <ClInclude Include="tools.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cube\cube.frag.glsl" />
+    <None Include="cube\cube.vert.glsl" />
     <None Include="src\ocean.frag.glsl" />
     <None Include="src\ocean.vert.glsl" />
   </ItemGroup>

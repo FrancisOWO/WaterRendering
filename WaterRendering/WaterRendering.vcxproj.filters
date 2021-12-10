@@ -64,7 +64,17 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="src\ocean.frag.glsl" />
-    <None Include="src\ocean.vert.glsl" />
+    <None Include="cube\cube.frag.glsl">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="cube\cube.vert.glsl">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="src\ocean.frag.glsl">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="src\ocean.vert.glsl">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

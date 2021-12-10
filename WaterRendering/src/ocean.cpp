@@ -1,7 +1,9 @@
 #include "ocean.h"
 
-cOcean::cOcean(const int N, const float A, const vector2 w, const float length, const bool geometry) :
-	g(9.81f), geometry(geometry), N(N), Nplus1(N + 1), A(A), w(w), length(length),
+cOcean::cOcean(const int N, const float A, const vector2 wind, const float length, const bool geometry,
+	const int nx, const int nz, const vector2 offset) :
+	g(9.81f), geometry(geometry), N(N), Nplus1(N + 1), A(A), wind(wind), length(length), 
+	m_nx(nx), m_nz(nz), m_offset(offset),
 	vertices(0), indices(0), h_tilde(0), h_tilde_slopex(0), h_tilde_slopez(0), h_tilde_dx(0), h_tilde_dz(0), fft(0)
 {
 	h_tilde = new complex[N * N];
@@ -81,12 +83,14 @@ cOcean::cOcean(const int N, const float A, const vector2 w, const float length, 
 	view = glGetUniformLocation(glProgram, "View");
 	model = glGetUniformLocation(glProgram, "Model");
 
-	glGenBuffers(1, &vbo_vertices);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+	glGenVertexArrays(1, &VAO);		//VAO
+
+	glGenBuffers(1, &VBO);			//VBO
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_ocean) * (Nplus1) * (Nplus1), vertices, GL_DYNAMIC_DRAW);
 
-	glGenBuffers(1, &vbo_indices);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
+	glGenBuffers(1, &EBO);			//EBO
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_count * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 }
 
@@ -102,8 +106,9 @@ cOcean::~cOcean() {
 }
 
 void cOcean::release() {
-	glDeleteBuffers(1, &vbo_indices);
-	glDeleteBuffers(1, &vbo_vertices);
+	glDeleteBuffers(1, &EBO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &VAO);
 	//	releaseProgram(glProgram, glShaderV, glShaderF);
 	glDeleteProgram(glProgram);
 }
@@ -124,10 +129,10 @@ float cOcean::phillips(int n_prime, int m_prime) {
 	float k_length2 = k_length * k_length;
 	float k_length4 = k_length2 * k_length2;
 
-	float k_dot_w = k.unit() * w.unit();
+	float k_dot_w = k.unit() * wind.unit();
 	float k_dot_w2 = k_dot_w * k_dot_w * k_dot_w * k_dot_w * k_dot_w * k_dot_w;
 
-	float w_length = w.length();
+	float w_length = wind.length();
 	float L = w_length * w_length / g;
 	float L2 = L * L;
 
@@ -377,20 +382,23 @@ void cOcean::render(float t, glm::vec3 light_pos, glm::mat4 Projection, glm::mat
 	glUniformMatrix4fv(view, 1, GL_FALSE, glm::value_ptr(View));
 	glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(Model));
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo_vertices);
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertex_ocean) * Nplus1 * Nplus1, vertices);
 	glEnableVertexAttribArray(vertex);
 	glVertexAttribPointer(vertex, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_ocean), 0);
 	glEnableVertexAttribArray(normal);
-	glVertexAttribPointer(normal, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_ocean), (void*)(3 * sizeof(float)));	// (char *)NULL + 12);
+	glVertexAttribPointer(normal, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_ocean), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(texture);
-	glVertexAttribPointer(texture, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_ocean), (void*)(6 * sizeof(float)));// (char *)NULL + 24);
+	glVertexAttribPointer(texture, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_ocean), (void*)(6 * sizeof(float)));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_indices);
-	for (int j = 0; j < 10; j++) {
-		for (int i = 0; i < 10; i++) {
-			Model = glm::scale(glm::mat4(1.0f), glm::vec3(5.f, 5.f, 5.f));
-			Model = glm::translate(Model, glm::vec3(length * i, 0, length * -j));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	for (int j = 0; j < m_nz; j++) {
+		for (int i = 0; i < m_nx; i++) {
+			float scale = 5.0f;
+			Model = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+			Model = glm::translate(Model, glm::vec3(length * i + m_offset.x, 0, length * -j + m_offset.y));
 			glUniformMatrix4fv(model, 1, GL_FALSE, glm::value_ptr(Model));
 			glDrawElements(geometry ? GL_LINES : GL_TRIANGLES, indices_count, GL_UNSIGNED_INT, 0);
 		}

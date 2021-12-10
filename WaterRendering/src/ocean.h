@@ -35,7 +35,11 @@ private:
 	float g;				// gravity constant
 	int N, Nplus1;			// dimension -- N should be a power of 2
 	float A;				// phillips spectrum parameter -- affects heights of waves
-	vector2 w;				// wind parameter
+	vector2 wind;			// wind parameter
+
+	int m_nx, m_nz;			// 海面块数(nx,nz)*单块面积=海面大小
+	vector2 m_offset;		// 海面位置偏移
+
 	float length;			// length parameter
 	complex* h_tilde,		// for fast fourier transform
 		* h_tilde_slopex, * h_tilde_slopez,
@@ -45,14 +49,16 @@ private:
 	vertex_ocean* vertices;				// vertices for vertex buffer object
 	unsigned int* indices;				// indicies for vertex buffer object
 	unsigned int indices_count;			// number of indices to render
-	GLuint vbo_vertices, vbo_indices;	// vertex buffer objects
+
+	GLuint VAO, VBO, EBO;
 
 	GLuint glProgram, glShaderV, glShaderF;	// shaders
 	GLint vertex, normal, texture, light_position, projection, view, model;	// attributes and uniforms
 
 protected:
 public:
-	cOcean(const int N, const float A, const vector2 w, const float length, bool geometry);
+	cOcean(const int N, const float A, const vector2 wind, const float length, bool geometry, 
+		const int width, const int height, const vector2 m_offset);
 	~cOcean();
 	void release();
 
